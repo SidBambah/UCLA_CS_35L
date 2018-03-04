@@ -1,0 +1,86 @@
+Sidharth Bambah
+UID: 904787435
+Lab # 1
+
+1. To get man to print all of the commands with a specific keyword in 
+	their page, run the command man -k keyword. I found this by using 
+	the hint (man man) which specified the flag needed to do this.
+2. The which command can be used to find the location of other commands.
+	Thus, to find the location of the cp program, type which cp. Likewise,
+	to find the location of the wc command, we type which wc.
+	Location of cp: /bin/cp
+	Location of wc: /usr/bin/wc
+3. To find the executable programs with names consisting of only one
+	character, we use the command ls user/bin/? We use this command because
+	all programs are typically stored in the /usr/bin directory and the 
+	wildcard ? will filter out all programs that have more than one character
+	in their names. This command yields:
+	[ - exit with the status determined by expression
+	w - displays information about the users currently on the machine, and their 
+		processes
+	The descriptions or these programs were found using the man pages for each,
+	respectively.
+4. To find out which file is actually being executed by the symbolic link, we 
+	navigate to the bin directory using the command cd /usr/bin. Then, to find
+	where the symbolic link points to, we run the command ls -l | grep emacs. 
+	This shows that emacs is really at /etc/alternatives/emacs
+5. As evidenced by the man page for chmod and the book, The Linux Command Line,
+	the 'g' stands for group ID and enumerates the users in the file's group.
+	Also, the plus operator causes the file mode bits to be added to the
+	existing file mode bits. Finally, the 's' sets the group ID on execution.
+    The 'o' stands for other. So, the flag 'o-x' removes the ability for others
+	to execute the program.
+6. In order to use the find command to view files that have been changed within
+	a certain period of time we use the flag -ctime -21. The -ctime flag 
+	requires a numerical argument, x, that makes the find command look for files
+	modified within x days.
+7. To look for the directories that have been modified with three weeks, we use 
+	the command find / -type d -ctime -21. The -type flag tells the program to
+	look only for directories and the / is used to tell find where to search
+	for the modified directories.
+8. The find program is in the /usr/bin/ directory as derived by using the which
+	find command. With this information we can run the command 
+	find /usr/bin -type l | wc -l
+	to count the number of symbolic links in the folder. The type flag tells
+	the find command to only look at the symbolic links. Then, the pipe to
+	wc with the -l flag counts the number of lines that are outputted. 
+	This number is 242 and represents the number of symbolic links in
+	the /usr/bin directory.
+9. To find the oldest regular file in the /usr/lib directory, we run the command
+	cd /usr/lib to get to the directory followed by ls -ltr. The -l flag tells
+	ls to list all of the files in long form, the -t flag tells the command to
+	list the entries with the newest first, and the r flag reverses the order
+	resulting in the oldest entries on top. The file entry denoted with a '-' as
+	the first descriptor is the oldest file and is libijs-0.35.so.
+10. The locale command generates data regarding the currently set locale. This
+	locale is defined in the environmental variabls of the system.
+11. To find the commands that have sort in their names in emacs we use the
+	command C-h a. Then, using the keyword search feature, we find that the
+	commands with sort in their names are as follows:
+	Buffer-menu-sort
+	sort-columns
+	sort-fields
+	sort-lines
+	sort-numeric-fields
+	sort-pages
+	sort-paragraphs
+	sort-regexp-fields
+	tabulated-list-col-sort
+	tabulated-list-sort
+12. Using C-h b we can see all of the commands in emacs. By using C-s to search
+	for "C-M-a" and "C-m-h" we can see that these commands do the following:
+	C-M-a = beginning-of-defun: Move backward to the beginning of a defun.
+		Arguments can be used to do it many times. The point ends up at the
+		beginning of the line where the search succeeds.
+	C-M-h = mark-defun: Puts mark at end of this defun, point at beginning. The
+		defun marked is the one that contains the point or follows it.
+13. Using the same methodology as in question 12, the keystroke C-g is as
+	follows:
+	C-g = keyboard-quit: Signal's a 'quit' condition. At the top-level, as an
+	editor command, there is a beep. During execution of Lisp code, this
+	character causes a quit directly.
+14.	The yank function reinserts, or pastes, the last stretch of killed text.
+	Essentially, it reinserts the most recent kill and puts the point at the end.
+	Also, it sets the mark at the beginning without activating it.
+15. The emacs dired command also lists the parent and current directory while
+	the ls -l command does not.

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+input=$1   # saves the file into input variable
+
+sed -n "/<table/,/<\/table>/p" $input | #only keep the table element
+
+sed "/<tr>/,/<\/td>/d" | #delete English words
+
+sed "/table/d" | #remove first and last table tags
+
+tr '[A-Z]' '[a-z]' | #convert all uppercase to lowercase
+
+sed "s/\`/\'/g" | #change okina to apostrophe
+
+sed "s/\,/\n/g" | #split comma separated words
+
+sed "s/ /\n/g" | #split words in a sentence
+
+sed "s/<\/td>/\n/g" | #replace </td> with \n
+
+sed 's/<[^>]*>//g' | #delete HTML tags
+
+grep "^[pk\' mnwlhaeiou]\{1,\}$" | #only give lines that are hawaiian words
+
+sort -u #sort all words and remove duplicates

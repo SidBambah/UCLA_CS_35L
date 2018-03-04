@@ -1,0 +1,68 @@
+Sidharth Bambah
+UID: 904 787 435
+
+Lab 6
+
+For the first portion of this lab, I checked the version of sort running
+on the SEASnet system by running the following command within the remote
+server:
+	$sort --version
+	sort (GNU coreutils) 8.28
+	Copyright (C) 2017 Free Software Foundation, Inc.
+	License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+	This is free software: you are free to change and redistribute it.
+	There is NO WARRANTY, to the extent permitted by law.
+
+	Written by Mike Haertel and Paul Eggert.
+
+Clearly, the version of sort is new enough to complete this lab. After checking
+this version, I created a file with 10,000,000 random single precision floating
+point numbers. To do this, I ran the command:
+
+	$od -tf -N 80000000 < /dev/urandom > temp.txt
+
+This command uses object dump with the -tf flag that specifies floating point.
+The number 80000000 is used to create 10 million numbers as the od command takes
+the number of bytes and each floating point number is a double that contains 8
+bytes. Then, we send this file to sed to remove all of the spaces from the start
+and all of the octal numbers as follows:
+
+	$sed 's/^[0-7]* *//' < temp.txt > large_file.txt
+
+After running this, we use the tr command to convert all of the spaces between
+the numbers to new lines using the following command:
+
+	$tr -s ' ' '\n' < large_file.txt > sorted_file.txt
+
+Once the sorted large file has been created, we can use the time command to measure
+how long sort -g takes as follows:
+	
+	$time -p sort -g sorted_file.txt > /dev/null
+	real 36.27
+	user 197.90
+	sys 1.64
+	
+	$time -p sort -g --parallel=1 sorted_file.txt > /dev/null
+	real 197.78
+	user 196.21
+	sys 1.56
+	
+	$time -p sort -g --parallel=2 sorted_file.txt > /dev/null
+	real 99.39
+	user 189.22
+	sys 0.46
+
+	$time -p sort -g --parallel=4 sorted_file.txt > /dev/null
+	real 59.07
+	user 200.54
+	sys 1.76
+
+	$time -p sort -g --parallel=8 sorted_file.txt > /dev/null
+	real 35.68
+	user 197.53
+	sys 0.97
+
+It is clear that the default verion of sort and the one with --parallel=8 has
+roughly the same run time suggesting that it is optimized to use all 8 processors.
+As can be seen, all other variations of parallel are a little bit slower than
+than the one with 8 threads and the default one.

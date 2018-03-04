@@ -1,0 +1,44 @@
+Sidharth Bambah
+UID: 904 787 435
+
+Q1. Brady's patch removed the line "case_long_iso_time_style:" because the
+	compiler considers it to be a go to label rather than a case of the switch
+	statement. It is necessary for this line to be removed as the program will
+	not hit the correct case with it still in place.
+
+Q2. If the locale for people in countries that don't speak English is not in the
+	locales specified by the modified ls command, the date output will revert
+	back to the English version rather than the numerical date output.
+
+Q3. When the script is invoked on an empty file, such as /dev/null, an error is
+	displayed. This is because the randline program tries to access all of the
+	lines of the document and, if there are no lines, the seq variable is empty
+	and the error is presented as follows:
+	Traceback (most recent call last):
+  File "./randline.py", line 70, in <module>
+    main()
+  File "./randline.py", line 64, in main
+    sys.stdout.write(generator.chooseline())
+  File "./randline.py", line 34, in chooseline
+    return random.choice(self.lines)
+  File "/usr/lib/python2.7/random.py", line 273, in choice
+    return seq[int(self.random() * len(seq))]  # raises IndexError if seq is
+	empty
+	IndexError: list index out of range
+
+Q4. When running the randline program without any operands, python3 gives an
+	error while python does not. This is because the syntax required for python3
+	is different from that required for python. The output for the command
+	python randline.py is:
+	Usage: randline.py [OPTION]... FILE
+
+	Output randomly selected lines from FILE.
+
+	randline.py: error: wrong number of operands
+	However, the output for python3 randline.py is:
+		File "randline.py", line 65
+		except IOError as (errno, strerror):
+						  ^
+		SyntaxError: invalid syntax
+	In order to fix this error, a single parameter could be passed instead of
+	the two given parameters.

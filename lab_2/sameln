@@ -1,0 +1,61 @@
+#!/bin/bash
+
+dir=$1  #get the first argument
+
+VISIBLE=`ls $dir | sort` #places all visible files into a variable
+INVISIBLE=`ls -a $dir | grep '^\.' | sort` #places all hidden files in variable
+
+let num=0
+
+declare -a FILES #array containing all of the files
+
+return="$IFS"
+IFS=$'\n' #sets delimeter to newline character
+
+for file in $INVISIBLE #save all dot files into array
+do
+	if [ -L "$dir/$file" ]
+	then
+		:
+	elif [ ! -f "$dir/$file" ]
+	then
+		:
+	elif [ ! -r "$dir/$file" ]
+	then
+		echo "No read permission for $file"
+	else
+		FILES[$num]="$dir/$file"
+		let num=num+1
+	fi
+done
+
+for file in $VISIBLE #save all regular files into array
+do
+	if [ -L "$dir/$file" ]
+	then
+		:
+	elif [ ! -f "$dir/$file" ]
+	then
+		:
+	elif [ ! -r "$dir/$file" ]
+	then
+		echo "No read permission for $file"
+	else
+		FILES[$num]="$dir/$file"
+		let num=num+1
+	fi
+done
+
+for (( j=0; j<$num; j++ )) #loop through all of the files
+do
+	for (( z=j+1; z<$num; z++ ))
+	do
+		cmp -s "${FILES[$j]}" "${FILES[$z]}" #compare the files
+		if [ $? -eq 0 ]
+		then
+			ln -fP  "${FILES[$j]}" "${FILES[$z]}" #create link if file									s are same
+			FILES[$z]=FILES[$i]
+		fi
+	done
+done
+IFS=$return

@@ -1,0 +1,157 @@
+Sidharth Bambah
+UID: 904 787 435
+
+Lab 4
+
+I started the lab by logging into the linux09 SEASnet server and downloading the
+old version of coreutils with the wget command as follows:
+wget \
+http://web.cs.ucla.edu/classes/fall17/cs35L/assign/coreutils-with-bug.tar.gz
+
+Then, we build this version of Coreutils into a temporary directory using the
+following commands:
+	tar -xvf coreutils-with-bug.tar.gz (unzips the folder containing the source
+											code for the software)
+	cd coreutils-with-bug (goes to the directory containing the source code)
+	./configure --prefix=/u/ee/ugrad/bambah/Desktop/install (chooses the 
+										temporary directory that will be used
+										to install the software)
+	make (compiles the binary for the software)
+
+However, when we run the make command, we get the following error:
+
+In file included from utimecmp.c:41:0:
+utimens.h:2:5: error: conflicting types for 'futimens'
+ int futimens (int, char const *, struct timespec const [2]);
+	 ^
+In file included from utimecmp.h:25:0,
+				 from utimecmp.c:25:
+/usr/include/sys/stat.h:374:12: note: previous declaration of 'futimens' washere
+ extern int futimens (int __fd, __const struct timespec __times[2]) __THROW;
+			^
+
+To fix this error, we download the provided patch from the course website using
+the following command:
+	wget \
+http://web.cs.ucla.edu/classes/fall17/cs35L/assign/coreutils.diff
+
+After downloading this patch, we apply it using the commands:
+	patch -p0 < coreutils.diff
+
+The output of this command is:
+patching file lib/utimens.c
+patching file lib/utimens.h
+patching file src/copy.c
+patching file src/tee.c
+patching file src/touch.c
+
+Thus, these are the files that have been modified by the patch. To check if the
+patch has fixed all of the problems, we run the make command once again.
+
+Now, we see that the make command has completed successfully suggesting that the
+renaming patch has resolved all of the errors. To complete the installation of
+the software, we run the command:
+	make install
+
+Using this installation, we can reproduce the errors in the ls program by
+creating three different files and altering their modified dates as follows:
+tmp=$(mktemp -d)
+cd $tmp
+touch -d '1918-11-11 11:00 GMT' wwi-armistice
+touch now
+sleep 1
+touch now1
+TZ=UTC0 ~/Desktop/install/bin/ls -lt --full-time wwi-armistice now now1 (this
+										lists the newly created files with the
+										buggy ls program)
+rm -fr $tmp
+The output of these commands is:
+-rw-r--r-- 1 bambah eeugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice
+-rw-r--r-- 1 bambah eeugrad 0 2017-10-24 04:53:26.196472089 +0000 now1
+-rw-r--r-- 1 bambah eeugrad 0 2017-10-24 04:53:19.187356190 +0000 now
+
+Clearly, this is incorrect as the wwi-armistice file is being displayed as the
+most recent even though it is the oldest file of the three.
+
+To find why this problem is ocurring, we can use the gdb debugging utility
+through the following commands all within the tmp directory:
+gdb ~/Desktop/coreutils-with-bug/src/ls (starts the debugging software with ls
+									as the main source file to be looked at)
+All of the following commands are done withing the GDB program:
+	(gdb) info functions (list all of the functions in the ls.c file)
+Within the ls.c file, we see the compare_mtime function that seems to be used
+to display the files by time. Thus, we will set a break point at this function
+and examine it more closely.
+	(gdb) break compare_mtime
+Now that the breakpoint has been set, I run the program with the necessary
+options and it should pause at the specified function.
+	(gdb) r -lt --full-time wwi-armistice now now1
+When the program stops at the compare_mtime function, I use the following
+commands to trace the bug:
+	(gdb) s  (Keeps on stepping into the program)
+	(gdb) info locals (Whenever I see the diff variable being returned)
+	(gdb) s
+	49        return diff ? diff : a.tv_nsec - b.tv_nsec;
+	(gdb) info locals
+	diff = -1171890558
+	(gdb) quit
+Eventually, I found that the diff variable had become negative in the timespec
+function. This should never be the case and seems to be the result of an integer
+overflow. To solve this problem, I used a text editor to modify the timespec.h
+file using the following commands:
+	cp ~/Desktop/coreutils-with-bug/lib/timespec.h ~/Desktop (make a copy of the
+															file)
+	cd ~/Desktop
+	vim timespec.h (opens the file in a text editor)
+Then, I moved to line 48 and got rid of the subtraction to avoid integer
+overflow. I did this by changing the timespec_cmp function to the following:
+	static inline int
+	timespec_cmp (struct timespec a, struct timespec b)
+	{
+		if(a.tv_sec > b.tv_sec)
+			return 1;
+		else if(a.tv_sec == b.tv_sec)
+			return 0;
+		else
+			return -1;
+	}
+After making these changes, I used diff to produce the patch file as follows
+	diff -u ~/Desktop/coreutils-with-bug/lib/timespec.h timespec.h > patch.diff
+In this patch, I changed the paths to 'lib/timespec.h'.
+Then, I created the changelog using a text editor as follows:
+	emacs
+	C-x 4 a:
+		2017-10-28  Sidharth Singh Bambah  <bambah@lnxsrv09.seas.ucla.edu>
+
+        * Patched the timespec.h file with if statements detecting if the return
+        value should be positive or negative.
+	mv ChangeLog lab4.diff (changes the name of the file)
+After creating this changelog, I added the patch file to it as follows:
+	cat patch.diff >> lab4.diff
+Now that the patch is created, I tested it by running the following commands:
+	patch -p0 < lab4.diff
+	make
+Upon making it, I tested the program using the following command:
+cd $tmp
+TZ=UTC0 ~/Desktop/coreutils-with-bug/src/ls -lt --full-time wwi-armistice now \
+now1
+This command gives the following output:
+-rw-r--r-- 1 bambah eeugrad 0 2017-10-29 04:18:58.430896539 +0000 now1
+-rw-r--r-- 1 bambah eeugrad 0 2017-10-29 04:18:52.458797660 +0000 now
+-rw-r--r-- 1 bambah eeugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice
+To test this problem in the SEASnet servers, I ran the following commands:
+	cd ~/Desktop
+	touch -d '1918-11-11 11:00 GMT' wwi-armistice
+	touch now
+	sleep 1
+	touch now1
+	TZ=UTC0 ls -lt --full-time wwi-armistice now now1
+This gives the output:
+-rw-r--r-- 1 bambah eeugrad 0 2054-12-17 17:28:16.000000000 +0000 wwi-armistice
+-rw-r--r-- 1 bambah eeugrad 0 2017-10-29 04:40:24.233157000 +0000 now1
+-rw-r--r-- 1 bambah eeugrad 0 2017-10-29 04:40:19.225698000 +0000 now
+
+Clearly, the wwi-armistice file is depicted to be from a time quite far in the
+future. This is because the SEASnet system uses 32 bits that are unsigned. But,
+the local file system on the linux server uses signed 32 bits. The way to fix
+this problem it to manipulate the local file system.

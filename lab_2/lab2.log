@@ -1,0 +1,181 @@
+Sidharth Bambah
+UID: 904 787 435
+
+Lab 2 Log
+
+First, we run the ssh [username]@lnxsrv09.seas.ucla.edu command to log on to the
+SEASnet Linux host.
+
+Next, we use the locale command to check that we are using the standard C 
+locale. The system is using the 'en-US' locale and needs to be changed through
+the export LC_All='C' command.
+
+Once the locale is set, we run sort /usr/share/dict/words > sorted_words to sort
+all of the words and push the output to a words file that is stored in the
+working directory.
+
+Then, we download the assignment webpage using the command
+wget http://web.cs.ucla.edu/classes/fall17/cs35L/assign/assign2.html and convert
+the HTML file to a text document using mv assign2.html assign2.txt
+
+Now, we run the first command with assign2.txt as stdin as follows:
+tr -c 'A-Za-z' '[\n*]' < assign2.txt
+This command replaces each character that is not a letter with a newline
+character. The -c flag means complement. So, every character that is not an 
+uppercase or lower case letter is replaced with a new line. Because there are
+differing amounts of letter complements between each letter, the number of new
+lines will be different between each word.
+
+Next, we run the second command with assign2.txt as stdin as follows:
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt
+This command is the same as the previous one; however, the addition of the -s 
+flag tells the command to squeeze repeats, which enters only the first new line
+character and does not repeat it again when non letter characters are found.
+Essentially, all of the new line characters are deleted after the first one.
+
+Next, we run the third command with assign2.txt as stdin once again as follows:
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt | sort
+This is the same command as before, but now, the output is piped to the sort
+program which sorts all of the output into lexicographic order.
+
+After this, we run the fourth command as shown below:
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt | sort -u
+Once again, this is the same command as before, but now, the -u flag is added to
+the sort command. This flag causes the sorted output to only display unique.
+This causes any duplicate words to be removed from the output.
+
+Then, we run the fifth command as shown below:
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt | sort -u | comm - sorted_words
+Once again, this is the same as the previous command, but the output is piped
+to the comm program which compares two files. In this case, the comparison file
+is words_sorted, which was created earlier in the lab.
+
+Finally, we run the sixth command as shown below:
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt | sort -u | comm -23 - sorted_words
+This is the same command as before, but the comm comand is given the flag -23.
+This flag suppresses the second and third columns. Thus, only the words that are
+unique to assign2.txt are shown and the words only in sorted_words or in both
+are not shown.
+
+Next, we download the simple Hawaiian dictionary from the given website using
+the following command:
+wget http://mauimapp.com/moolelo/hwnwdseng.htm
+The script used to spell check Hawaiian words is given below as:
+
+#!/bin/bash
+input=$1   # saves the file into input variable
+sed -n "/<table/,/<\/table>/p" $input | #only keep the table element
+sed "/<tr>/,/<\/td>/d" | #delete English words
+sed "/table/d" | #remove first and last table tags
+tr '[A-Z]' '[a-z]' | #convert all uppercase to lowercase
+sed "s/\`/\'/g" | #change okina to apostrophe
+sed "s/\,/\n/g" | #split comma separated words
+sed "s/ /\n/g" | #split words in a sentence
+sed "s/<\/td>/\n/g" | #replace </td> with \n
+sed 's/<[^>]*>//g' | #delete HTML tags
+grep "^[pk\' mnwlhaeiou]\{1,\}$" | #only give lines that are hawaiian words
+sort -u #sort all words and remove duplicates
+
+To create the hwords file, we run the script as:
+./buildwords hwnwdseng.htm > hwords
+Next, we download the assignment website using the following command:
+wget http://web.cs.ucla.edu/classes/fall17/cs35L/assign/assign2.html
+
+Now, in order the check for mispelled English words, we run the command:
+tr 'A-Z' 'a-z' < assign2.html | tr -cs 'A-Za-z' '[\n*]' | sort -u \
+| comm -23 - words > misEnglish
+wc -l misEnglish
+This gives the mispelled English words in the webpage. By piping the output to
+wc -l, we can see that there are 39 mispelled English words.
+Some examples are:
+basedefs
+buildwords
+charset
+cmp
+ctype
+doctype
+eggert
+eword
+halau
+href
+htm
+html
+http
+hwnwdseng
+hword
+hwords
+idx
+lau
+
+In order to check for mispelled Hawaiian words, we run the commands:
+tr 'PKMNWLHAEIOU' 'pkmnwlhaeiou' < assign2.html | \
+tr -cs "pk\'mnwlhaeiou" '[\n*]' | sort -u | comm -23 - hwords > misHawaiian
+wc -l misHawaiian
+This command changes all of the Hawaiian characters to lowercase and compares
+all of the words to the Hawaiian dictionary. The output of this command is 198
+suggesting that this is the number of mispelled Hawaiian words in the webpage.
+Some examples are:
+he
+hea
+hei
+hell
+hem
+hen
+hi
+hin
+ho
+homewo
+houl
+how
+howe
+hown
+hwnw
+hwo
+ia
+ial
+ie
+ii
+ile
+ilen
+ili
+
+To check for mispelled English words that are not mispelled in
+Hawaiian, we run the following command:
+cat misEnglish | tr -cs "pk\'mnwlhaeiou" '[\n*]' | sort -u | comm -12 - hwords
+Some examples are:
+e
+halau
+i
+lau
+po
+wiki
+
+Finally, to check for mispelled Hawaiian words that are not mispelled in
+English, we run the following command:
+cat misHawaiian | tr -cs 'A-Za-z' '[\n*]' | sort -u | comm -12 - words
+Some examples are:
+name
+ne
+nee
+no
+non
+nu
+num
+o
+om
+on
+one
+op
+ope
+open
+own
+p
+paul
+pe
+pell
+people
+plea
+pu
+u
+ui
+ula

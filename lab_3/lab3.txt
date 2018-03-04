@@ -1,0 +1,90 @@
+Sidharth Bambah
+UID: 904 787 435
+Lab 3
+
+In order to view and fix the error present in the Coreutils 7.6 implementation,
+I grabbed the software and installed it into a temporary directory using the
+following commands:
+	mkdir ~/temp  (creates a temporary directory)
+	cd ~/temp  (change into the temp directory)
+	wget ftp://ftp.gnu.org/gnu/coreutils/coreutils-7.6.tar.gz (download the 
+														Coreutils package)
+	tar -xzvf coreutils-7.6.tar.gz (unzips the package into the current
+								directory -x restores files, -z unzips the
+								files, -v prints out the progress, and -f allows
+								the package to be specified)
+	cd coreutils-7.6/         (change into the newly created Coreutils
+								directory)
+	mkdir ~/temp/install      (creates a directory to install the Coreutils
+								software into)
+	./configure --prefix=/u/ee/ugrad/bambah/temp/install (checks if the system
+									contains the necessary libraries and
+									header file)
+	make 				(compiles the source code into binary)
+	make install		(moves the binary into the temporary install directory
+							created earlier)
+	locale				(checks that the locale is en_US.UTF-8)
+	cd ~/temp/install	(changes to the directory where the buggy ls command is
+							installed)
+	./ls -l /bin/bash	(reproduces the bug that is present in the package)
+	(output of bug = -rwxr-xr-x 1 root root 960632 2017-08-03 06:36 /bin/bash)
+
+After seeing the issue in the ls command, we try to patch the buggy program
+using the following commands:
+	cd ~/temp/coreutils-7.6  (changes into the directory where the source files
+								are stored)
+	cd src					(changes into the directory that contains the source
+								file for ls)
+	vim ls.c				(opens a text editor allowing us to modify the
+							source code; piazza recommended using vim or nano)
+Then, I applied the Brady patch to this ls.c file. Using the diff output given 
+in the Brady patch, I did the following:
+	vim patch_file.diff		(this creates a patch file into which I copied and
+								pasted Brady's patch using the vim editor; I
+								also changed the paths for the files to match
+								the paths used in my system)
+	patch -p0 < patch_file.diff (applies the patch to the ls.c file in the src
+								directory)
+	
+
+After applying the patch, I remade the coreutils modified program using the
+following commands:
+	cd ~/temp/coreutils-7.8  (changes back to the directory containing the 
+								modified source code)
+	mkdir ~/temp/install_patched (creates a directory to install the patched
+									programs to)
+	./configure --prefix=/u/ee/ugrad/bambah/temp/install_patched
+	make
+	make install
+
+Once the patched version has been installed, I change into the directory it was
+installed in and test to see if the patch is successfuly implemented using the
+following commands:
+	cd ~/temp/install_patched/bin
+	./ls -l /bin/bash (the output of this command is 
+						-rwxr-xr-x 1 root root 960632 Aug  3 06:36 /bin/bash)
+After checking this, I created an empty file using the touch command and tested
+the patched ls using the following commands:
+
+Buggy LS
+	cd ~/temp/install/bin
+	touch test_file
+	../ls -l test_file
+	touch -t 200109050811 test_file
+	./ls -l test_file
+	Output:
+		-rw-r--r-- 1 bambah eeugrad 0 2017-10-21 00:07 test_file
+		-rw-r--r-- 1 bambah eeugrad 0 2001-09-05 08:11 test_file
+Patched LS
+	cd ~/temp/install_patched/bin
+	touch test_file
+	./ls -l test_file
+	touch -t 200109050811 test_file
+	./ls -l test_file
+	Output:
+		-rw-r--r-- 1 bambah eeugrad 0 Oct 20 23:46 test_file
+		-rw-r--r-- 1 bambah eeugrad 0 Sep  5  2001 test_file
+
+In the patched version of ls, the time is not shown for files that were modified
+over a year ago. However, the time is shown in the buggy version of ls.
+	
